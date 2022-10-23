@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.learn.ram.entity.Device;
+import com.learn.ram.kafka.DevicerRecordProducer;
 import com.learn.ram.mapper.DeviceMapper;
 import com.learn.ram.model.DeviceDto;
 import com.learn.ram.repository.DeviceRepository;
@@ -19,6 +20,9 @@ public class DeviceService {
 	@Autowired
 	DeviceMapper mapper;
 
+	@Autowired
+	DevicerRecordProducer deviceProducer;
+	
 	public List<DeviceDto> getDevices() {
 		List<Device> devices = repository.findAll();
 
@@ -27,7 +31,9 @@ public class DeviceService {
 
 	public DeviceDto createDevice(DeviceDto dto) {
 		Device dbDevice =  repository.save(mapper.mapDevice(dto));
-		return mapper.mapDevices(List.of(dbDevice)).get(0);
+		DeviceDto updatedDto = mapper.mapDevices(List.of(dbDevice)).get(0);
+		deviceProducer.send(updatedDto);
+		return updatedDto;
 	}
 
 }
